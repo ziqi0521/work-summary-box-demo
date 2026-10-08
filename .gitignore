@@ -2,3 +2,6 @@ __pycache__/
 *.pyc
 .DS_Store
 Thumbs.db
+
+# build_docs.py --from-local 的调试产物（用的是本地旧快照，绝不能当正式页面提交）
+src/docs/_preview/

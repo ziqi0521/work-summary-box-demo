@@ -22,12 +22,17 @@ SRC = ROOT / "src"
 PROJECT = Path(r"C:\Users\ziqi.ma\Desktop\工作汇总工具")
 DB = PROJECT / "work.db"
 
-# 本文件自己就装着下面这张黑名单，扫自己必然自伤 —— 跳过，且只跳它一个。
-SELF = Path(__file__).resolve()
-
 # 要公开的文件类型（按文本处理）；其余（png 等）跳过
 TEXT_EXT = {".html", ".md", ".js", ".py", ".css", ".json", ".txt", ".yml", ".yaml"}
-SKIP_DIRS = {".git", "node_modules", "__pycache__"}
+SKIP_DIRS = {".git", "node_modules", "__pycache__", "_preview"}
+
+# 装着黑名单本身的文件，扫自己必然自伤。只跳这两个，且跳过的动作会打印出来 ——
+# 不静默豁免。这两个文件里只有「规则」（公司域名、库文件名），没有任何从库里
+# 捞出来的真实姓名 / 项目名 / open_id，所以跳过它们的代价是可控的。
+SELF_EXEMPT = {
+    Path(__file__).resolve(),                        # 本文件：装着黑名单
+    (Path(__file__).resolve().parent / "build_docs.py"),  # 装着脱敏规则表
+}
 
 # 公司/内网专有名词。这些在公开产物里一个都不该出现。
 # 刻意**不含** `feishu`/`llm-gateway` 这类通用词：飞书是公开产品、llm-gateway 是
@@ -124,15 +129,19 @@ def denylist_from_db():
 
 def targets():
     out = []
+    skipped = []
     for p in ROOT.rglob("*"):
         if not p.is_file():
             continue
         if any(part in SKIP_DIRS for part in p.parts):
             continue
-        if p.resolve() == SELF:
+        if p.resolve() in SELF_EXEMPT:
+            skipped.append(p.relative_to(ROOT))
             continue
         if p.suffix.lower() in TEXT_EXT:
             out.append(p)
+    if skipped:
+        print("[gate] 豁免（本身装着黑名单）: " + ", ".join(map(str, skipped)))
     return sorted(out)
 
 
