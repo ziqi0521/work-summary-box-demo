@@ -1,0 +1,50 @@
+<!-- 演示站横幅：右下角一枚常驻小胶囊。
+     故意用原生 CSS + 内联 onclick，不依赖 Tailwind（Tailwind 是预编译的，没有这些 class）
+     也不依赖 Alpine（万一 Alpine 没加载起来，这条横幅仍然可见 —— 访客至少知道这是演示）。 -->
+<style>
+  #demo-pill {
+    position: fixed; right: 16px; bottom: 16px; z-index: 9999;
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 12px 8px 14px;
+    font: 13px/1.4 -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif;
+    color: #e5e7eb;
+    background: rgba(17, 24, 39, .92);
+    border: 1px solid rgba(255, 255, 255, .14);
+    border-radius: 999px;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, .28);
+    backdrop-filter: blur(6px);
+    user-select: none;
+  }
+  #demo-pill .dot {
+    width: 7px; height: 7px; border-radius: 50%; background: #34d399;
+    box-shadow: 0 0 0 3px rgba(52, 211, 153, .18);
+  }
+  #demo-pill b { font-weight: 600; color: #fff; }
+  #demo-pill .sep { color: rgba(255, 255, 255, .28); }
+  #demo-pill .note { color: #9ca3af; }
+  #demo-pill button {
+    font: inherit; color: #c7d2fe; cursor: pointer;
+    background: none; border: 0; padding: 2px 4px; border-radius: 6px;
+  }
+  #demo-pill button:hover { background: rgba(255, 255, 255, .1); color: #fff; }
+  #demo-pill button:disabled { color: #6b7280; cursor: default; background: none; }
+  @media (max-width: 640px) {
+    #demo-pill .note { display: none; }
+    #demo-pill .sep { display: none; }
+  }
+</style>
+<div id="demo-pill">
+  <span class="dot"></span>
+  <span><b>演示模式</b></span>
+  <span class="sep">|</span>
+  <span class="note">数据为虚构，改动只存在你的浏览器里</span>
+  <button id="demo-reset" title="清掉本地改动，恢复初始演示数据">重置</button>
+</div>
+<script>
+  document.getElementById('demo-reset').addEventListener('click', function () {
+    var btn = this;
+    btn.disabled = true;
+    btn.textContent = '重置中…';
+    window.__DEMO_RESET__();
+  });
+</script>
