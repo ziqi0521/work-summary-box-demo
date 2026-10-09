@@ -30,6 +30,11 @@
 ![首页](assets/home.png)
 ![每日工作确认](assets/confirm.png)
 
+站上还放了两篇文档（内容取自线上 wiki，脱敏后渲染成静态页）：
+
+- [使用教程](tutorial.html) —— 从登录、绑定大模型 Key，到抓取、确认、出周报，一步步走完
+- [设计方案](design.html) —— 已上线系统的实际设计：核心流程、技术架构、关键设计决策、风险与应对
+
 ## 架构：不改前端，换掉后端
 
 关键约束是**不能为了做演示去改前端源码** —— 否则演示版和线上版就是两份代码，
@@ -65,12 +70,16 @@ src/shim.js ──────┘
 
 ```
 ├─ index.html           构建产物：演示站本体
+├─ tutorial.html        构建产物：使用教程
+├─ design.html          构建产物：设计方案
 ├─ src/
 │  ├─ demo_data.js      演示数据集（全部编造）
 │  ├─ shim.js           假后端：fetch 路由表 + EventSource 回放
 │  ├─ banner.html       右下角「演示模式」胶囊 + 重置按钮
 │  ├─ alpine.min.js     本地化的 Alpine 3.17.4（不依赖 CDN）
 │  ├─ build_site.py     生成 index.html
+│  ├─ build_docs.py     读线上 wiki → 脱敏 → 渲染成两个文档页
+│  ├─ docs/*.md         脱敏后的文档快照（wiki 不可达时可据此重建页面）
 │  ├─ check_public.py   发布前脱敏闸门
 │  ├─ test_shim.js      shim 的接口契约测试（75 条断言）
 │  └─ shoot.py          无头 Chrome 截图
@@ -86,6 +95,9 @@ node   src/test_shim.js           # shim 契约测试
 python src/shoot.py               # 重新截图
 python -m http.server 8080        # 然后开 http://localhost:8080
 ```
+
+`build_docs.py` 要现读线上 wiki（需要飞书授权），跑一次会重写 `tutorial.html` /
+`design.html` 和 `src/docs/*.md`；改文档内容改的是 wiki，不是这里。
 
 `build_site.py` 的每一条改写都要求**恰好命中一次**，命中数不对就退出 —— 上游
 `index.html` 一改，这里立刻炸掉，而不是悄悄产出一个半坏的页面。
