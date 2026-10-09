@@ -5,35 +5,392 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>设计方案 · 个人工作汇总BOX</title>
 <style>
-  :root { color-scheme: light; }
-  body { margin: 0; padding: 64px 24px; background: #f6f7fb;
-         font: 15px/1.75 -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif; color: #334155; }
-  .wrap { max-width: 680px; margin: 0 auto; background: #fff; border-radius: 16px;
-          padding: 40px 44px; box-shadow: 0 4px 24px rgba(15, 23, 42, .06); }
-  h1 { margin: 0 0 4px; font-size: 22px; color: #0f172a; }
-  .sub { margin: 0 0 28px; color: #94a3b8; font-size: 13px; }
-  .tag { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 12px;
-         background: #fef3c7; color: #b45309; }
-  p { margin: 14px 0; }
-  a { color: #2563eb; }
-  .box { margin-top: 28px; padding: 16px 18px; border-radius: 12px;
-         background: #f8fafc; border: 1px solid #e2e8f0; font-size: 14px; }
+:root { color-scheme: light; --ink:#1e293b; --muted:#64748b; --line:#e2e8f0;
+        --bg:#f6f7fb; --card:#fff; --accent:#2563eb; }
+* { box-sizing: border-box; }
+body { margin:0; background:var(--bg); color:var(--ink);
+       font:15px/1.8 -apple-system,"Segoe UI","Microsoft YaHei",system-ui,sans-serif; }
+a { color:var(--accent); text-decoration:none; }
+a:hover { text-decoration:underline; }
+code { background:#f1f5f9; border:1px solid var(--line); border-radius:5px;
+       padding:1px 5px; font-size:.88em;
+       font-family:"Cascadia Mono",Consolas,"SF Mono",Menlo,monospace; }
+pre { background:#0f172a; color:#e2e8f0; border-radius:12px; padding:16px 18px;
+      overflow:auto; font-size:13px; line-height:1.65; }
+pre code { background:none; border:none; color:inherit; padding:0; font-size:inherit; }
+hr { border:none; border-top:1px solid var(--line); margin:28px 0; }
+h1,h2,h3,h4 { color:#0f172a; line-height:1.4; }
+h2 { font-size:20px; margin:36px 0 12px; padding-bottom:8px;
+     border-bottom:1px solid var(--line); }
+h3 { font-size:17px; margin:26px 0 8px; }
+h4 { font-size:15px; margin:20px 0 6px; color:var(--muted); }
+blockquote { margin:16px 0; padding:10px 16px; border-left:3px solid var(--line);
+             background:#f8fafc; color:#475569; border-radius:0 8px 8px 0; }
+blockquote p { margin:6px 0; }
+blockquote.callout { border-left:3px solid #f59e0b; background:#fffbeb; color:#78350f; }
+blockquote.callout-demo { border-left:3px solid #3b82f6; background:#eff6ff; color:#1e40af; }
+blockquote.callout-eyes { border-left:3px solid #ef4444; background:#fef2f2; color:#7f1d1d; }
+table { border-collapse:collapse; width:100%; margin:16px 0; font-size:14px;
+        background:var(--card); border-radius:10px; overflow:hidden; }
+th,td { border:1px solid var(--line); padding:9px 12px; text-align:left;
+        vertical-align:top; }
+th { background:#f1f5f9; font-weight:600; color:#0f172a; }
+ul,ol { padding-left:24px; }
+li { margin:5px 0; }
+img { max-width:100%; border-radius:10px; border:1px solid var(--line); }
+
+.topbar { position:sticky; top:0; z-index:9; background:rgba(255,255,255,.9);
+          backdrop-filter:blur(8px); border-bottom:1px solid var(--line); }
+.topbar .inner { max-width:1100px; margin:0 auto; padding:12px 24px;
+                 display:flex; align-items:center; gap:18px; font-size:14px; }
+.topbar .brand { font-weight:600; color:#0f172a; }
+.topbar .sp { flex:1; }
+.topbar nav a { margin-left:16px; color:var(--muted); }
+.topbar nav a.on { color:var(--accent); font-weight:600; }
+
+.layout { max-width:1100px; margin:0 auto; padding:32px 24px 80px;
+          display:grid; grid-template-columns:230px minmax(0,1fr); gap:32px;
+          align-items:start; }
+.toc { position:sticky; top:76px; font-size:13px; max-height:calc(100vh - 100px);
+       overflow:auto; }
+.toc ul { list-style:none; padding-left:0; margin:0; }
+.toc ul ul { padding-left:14px; }
+.toc li { margin:3px 0; }
+.toc a { color:var(--muted); display:block; padding:3px 8px; border-radius:6px;
+         border-left:2px solid transparent; }
+.toc a:hover { background:#eef2f7; color:var(--accent); text-decoration:none; }
+.doc { background:var(--card); border-radius:16px; padding:36px 44px;
+       box-shadow:0 4px 24px rgba(15,23,42,.06); min-width:0; }
+.doc > h1 { margin:0 0 6px; font-size:24px; }
+.sub { color:var(--muted); font-size:13px; margin:0 0 24px; }
+.gallery { display:grid; grid-template-columns:repeat(2,minmax(0,1fr));
+           gap:14px; margin:20px 0 28px; }
+.gallery figure { margin:0; }
+/* 截图是整页长图，直接塞进网格会糊成一团。固定高度 + 从顶部裁切，
+   露出页头那一段（最好认的部分）。 */
+.gallery img { width:100%; height:210px; object-fit:cover; object-position:top; }
+.gallery figcaption { font-size:12px; color:var(--muted); margin-top:6px; text-align:center; }
+footer { max-width:1100px; margin:0 auto; padding:0 24px 48px;
+         color:var(--muted); font-size:13px; }
+@media (max-width:860px) {
+  .layout { grid-template-columns:1fr; }
+  .toc { position:static; max-height:none; }
+  .doc { padding:24px 20px; }
+}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <span class="tag">整理中</span>
-  <h1>设计方案</h1>
-  <p class="sub">个人工作汇总 BOX · 演示站</p>
-
-  <p>这份文档记录工具的模块划分、数据模型、抓取与凝练链路、以及每个决策背后的取舍，
-     正把它改写成一份对外可读的版本。</p>
-
-  <div class="box">
-    想先了解实现，可以看
+<div class="topbar"><div class="inner">
+  <a class="brand" href="./">个人工作汇总 BOX</a>
+  <span class="sp"></span>
+  <nav>
+    <a href="./">在线演示</a>
+    <a href="tutorial.html">使用教程</a>
+    <a href="design.html" class="on">设计方案</a>
     <a href="https://github.com/ziqi0521/work-summary-box-demo#readme">README</a>
-    里的「架构」一节 —— 演示站如何在<strong>不改前端一行代码</strong>的前提下换掉整个后端。
-  </div>
+  </nav>
+</div></div>
+<main class="layout">
+  <aside class="toc"><div class="toc">
+<ul>
+<li><a href="#_1">一、概述</a></li>
+<li><a href="#_2">二、用户与账号体系</a></li>
+<li><a href="#_3">三、核心流程</a><ul>
+<li><a href="#1-sse">① 抓取（手动触发，走 SSE 进度）</a></li>
+<li><a href="#2">② 凝练合并</a></li>
+<li><a href="#3">③ 确认 / 忽略 / 编辑</a></li>
+<li><a href="#4">④ 沉淀归档</a></li>
+<li><a href="#5">⑤ 一键成文（报告生成）</a></li>
+</ul>
+</li>
+<li><a href="#_4">四、功能模块</a></li>
+<li><a href="#_5">五、技术架构</a><ul>
+<li><a href="#sqlite">数据模型（SQLite 库）</a></li>
+<li><a href="#_6">任务与并发</a></li>
+</ul>
+</li>
+<li><a href="#_7">六、关键设计决策</a></li>
+<li><a href="#_8">七、数据与隐私</a></li>
+<li><a href="#_9">八、部署与运维</a></li>
+<li><a href="#_10">九、风险与注意事项</a></li>
+<li><a href="#_11">十、对外演示站（脱敏静态版）</a><ul>
+<li><a href="#_12">目标与三条硬约束</a></li>
+<li><a href="#shim">做法：静态快照 + 一层 shim</a></li>
+<li><a href="#_13">脱敏闸门（发布前必跑）</a></li>
+<li><a href="#_14">踩到的两个坑</a></li>
+<li><a href="#_15">与线上版的差异</a></li>
+</ul>
+</li>
+<li><a href="#_16">十一、迭代记录与远景</a></li>
+</ul>
 </div>
+</aside>
+  <article class="doc">
+<h1>设计方案</h1>
+<p class="sub">个人工作汇总 BOX · 演示站</p>
+
+<blockquote>
+<p>本文档描述<strong>已上线系统</strong>的实际设计（截至 2026-10-09，v0.12）。历史规划稿（v0.2 初步方案）已并入并全面更新，不再区分「设想」与「现状」。版本号与页面里的「最近上新」对齐：本文档 v0.12 ＝ 页面更新日志 v0.12。
+访问地址：<strong>https://ziqi0521.github.io/work-summary-box-demo/</strong> ｜ 配套文档：《个人工作汇总BOX · 使用教程》</p>
+</blockquote>
+<hr />
+<h2 id="_1">一、概述</h2>
+<p>日常工作分散在多个飞书群聊、私聊中（需求沟通、问题排查、评审、协作），信息碎片化；每周每月手动回忆整理周报/月报，耗时且容易遗漏。</p>
+<p><strong>本工具解决的核心问题</strong>：把「回忆 + 手写工作总结」变成「每天花 1 分钟点几下确认，月底一键成文」。</p>
+<ul>
+<li>自动抓取我在飞书的发言（含别人布置给我、点名要我做的事）</li>
+<li>大模型把围绕同一件事的碎消息<strong>凝练合并成一张工作卡片</strong></li>
+<li>用户逐卡确认 / 忽略 / 编辑，确认的进入历史归档</li>
+<li>按周 / 月一键生成正式报告（业绩维度 + 文化维度），可直接排版、富文本复制
+<strong>演进</strong>：v0.1 单人本地验证 → v0.2 初步方案设计 → v0.3 多用户版上线（OAuth 登录、数据按人隔离）→ v0.4 抓取来源扩展（@我 / 单聊 / 小群）+ 跨来源自动合并 + 报告流式生成与富文本编辑 → v0.5 产出形态扩展（实习总结 / 简历条目、工作画像、报告三种文体）+ 归档一键去重 + 空正文兜底与降级归因 → v0.6 抓取来源再扩（含我写的文档）+ 反馈墙可回复 → v0.7 报告对话改稿（全文重写 + 逐行 diff 预览 + 采用才写回）→ v0.8 稳定性与引导（前端样式改本地内联、排错提示配直达按钮）→ v0.9 待确认卡片一键全确认 → v0.10 站内通知（铃铛）+ 问题反馈状态可改→ v0.11 需求状态可改（待处理 / 处理中 / 已上线）+ 状态变化也提醒 → v0.12 对外演示站（脱敏静态版：零前端改动，静态快照 + fetch / EventSource shim）。</li>
+</ul>
+<hr />
+<h2 id="_2">二、用户与账号体系</h2>
+<ul>
+<li><strong>多用户</strong>：每位用户用各自飞书身份登录（OAuth 粘贴授权码），数据按 <code>open_id</code> 严格隔离——每人只能看到、抓取、汇总自己的消息。</li>
+<li><strong>会话</strong>：登录后 30 天免重登；过期重新授权即可。</li>
+<li><strong>大模型</strong>：每人填自己的 Key / Base URL / 模型（打码存储，只改模型时无需重填）。</li>
+<li><strong>机主管理</strong>：部署更新页面、删除全站反馈、改反馈状态仅机主可操作（管理员会话）。</li>
+</ul>
+<hr />
+<h2 id="_3">三、核心流程</h2>
+<pre><code>① 抓取  ──&gt;  ② 凝练合并  ──&gt;  ③ 确认/忽略  ──&gt;  ④ 沉淀归档  ──&gt;  ⑤ 一键成文
+</code></pre>
+<h3 id="1-sse">① 抓取（手动触发，走 SSE 进度）</h3>
+<ul>
+<li><strong>范围</strong>：当天 / 前一天 / 日期范围（单次 ≤ 31 天，可勾「仅工作日」）。</li>
+<li><strong>来源（五路）</strong>：<ol>
+<li><strong>群聊里我发的消息</strong>（含回复别人）—— 默认路径；</li>
+<li><strong>单聊</strong>布置给我的任务（勾选，默认关，模型识别）；</li>
+<li><strong>3~4 人小群</strong>布置给我的任务（勾选，默认关，模型识别）；</li>
+<li><strong>大群里别人 @我、需要我去做的事</strong>（勾选，默认关，模型识别；典型场景：对方 @我 让我处理某事、我做了没回复——以前会整条漏掉）；</li>
+<li><strong>我写的云文档 / 知识库文档</strong>（勾选「含我写的文档」，默认关）—— 设计方案、调研、复盘这类活儿常常从没在群里提过；个人云文档与知识库都搜，<strong>只看我名下、最后一次由我编辑的</strong>，会议自动生成的妙记不算。飞书搜索按相关性返回，多关键词并集也不保证覆盖全部，<strong>没抓到的手动补卡</strong>即可。</li>
+</ol>
+</li>
+<li><strong>@我的判定</strong>：消息 <code>mentions</code> 里点名我的 <code>open_id</code>；<code>@所有人</code> 的广播 id 不以 <code>ou_</code> 开头，天然不会命中，不算任务。</li>
+<li><strong>上下文窗口</strong>：@我 的消息带同群此前的连续发言（≤4 条 / 5 分钟窗口）一起给模型，否则"@张三 看下这个"无从判断要做什么。</li>
+<li><strong>取消</strong>：进度条旁「✕ 取消」——协作式取消，已抓到的卡片保留，没抓的部分停止。</li>
+<li><strong>进度</strong>：8→90 扫描会话（含"已找到我的消息 N 条、别人@我 M 条"）→ 97 扫描单聊 → 98 识别小群/@我 任务 → 99 合并 → 100 完成（带"已合并重复 K 张 / 清理旧卡 / 跳过已忽略"汇总）。</li>
+</ul>
+<h3 id="2">② 凝练合并</h3>
+<ul>
+<li><strong>凝练</strong>：每路来源由大模型把一组相关发言重写成<strong>一句话工作卡片</strong> <code>{title, detail, project, source_count}</code>。</li>
+<li><strong>合并（跨来源去重）</strong>：合并动作<strong>只在大模型做分组</strong>（输出下标组），由代码<strong>确定性地</strong>合并——标题取组内消息最多的那张、详情去重拼接、项目取非占位的那个。模型的错误最多表现为"没合并"，绝不会表现为"丢卡"。</li>
+<li><strong>幂等重抓</strong>：同一天重抓时，标题会<strong>锚定上一轮</strong>的 pending 标题（模型改写措辞不改变卡片身份），重抓结果稳定可复现；重抓前清掉当天旧「待确认」卡，已确认 / 已忽略的不受影响。</li>
+<li><strong>忽略记忆</strong>：忽略过的卡片以其 <code>(日期, 项目, 标题)</code> 指纹记忆；标题被模型改写后仍用「同项目 + 语义相似 + 共享专有名词」模糊兜底识别，<strong>不复活</strong>。</li>
+</ul>
+<h3 id="3">③ 确认 / 忽略 / 编辑</h3>
+<p>逐卡操作：<strong>✅ 确认</strong>（进归档，是报告的素材）／ <strong>🗑 忽略</strong>（记住，以后不再出现）／ <strong>✏️ 编辑</strong>（改标题/详情/项目）／ 删除（可恢复忽略记忆，用于误忽略自救）／ 手动新增。待确认卡多时用 <strong>✅ 全部确认</strong>：一次确认<strong>当前列出的</strong>那一批（「只看当天」就只认当天，「全部待确认」才是全部）。没有批量接口，服务端逐个复用单张确认那套调用、<strong>顺序发不并发</strong> —— 一次几十个并发请求会把服务打满。</p>
+<h3 id="4">④ 沉淀归档</h3>
+<ul>
+<li>已确认卡片按<strong>月份网格 → 下钻按日分组</strong>；支持关键词搜索、按月 / 按日就地补录、就地编辑、删除（可同时解除忽略记忆）。</li>
+<li><strong>一键去重（月视图）</strong>：把同一天里重复记录的卡片自动成组，<strong>先预览、逐组可取消、确认后才写库</strong>。判重两层：先本地文本相似（不依赖 Key 也能用），再大模型语义分组，两层结果用并查集合并。</li>
+<li><strong>只在同一天内合并</strong>：跨天合并会让某一天整天没有记录 —— 周报按日期组织会缺块、工作画像的「覆盖天数」会虚低。宁可漏合，不跨天。</li>
+<li>合并在<strong>单个事务</strong>里完成（更新留存行 + 删除被合并行 + 按新的「日期 + 项目 + 标题」重算 sig）。归档是已确认数据，<strong>没有「重抓重建」的退路</strong>，绝不能留下「原卡已删、留存卡没更新」的半截状态。</li>
+<li>服务端<strong>不信任前端传来的分组</strong>：逐组校验「全部属于本人 / 全部 confirmed / work_date 完全相同」，任一不满足就整组跳过。</li>
+</ul>
+<h3 id="5">⑤ 一键成文（报告生成）</h3>
+<ul>
+<li>周报 / 月报 + 快捷范围（本周 / 本月 / 上一自然月 / 考勤周期 25→次月24）。</li>
+<li><strong>三种文体</strong>（同一批条目，只改写法）：<strong>叙述式</strong>（连贯成段，正式提交用）／ <strong>提纲式</strong>（小标题分层，会上过一遍用）／ <strong>要点式</strong>（短句罗列，自留档 / 组内同步）。每种都可「看样例」，样例只是骨架示意、不含任何真实工作内容。</li>
+<li><strong>实习总结 → 简历条目</strong>：另一条产出线，范围是「入职日期 ~ 今天」（入职日期存浏览器）。两步各自独立成文、互不覆盖：① 五段式实习总结（实习概览 / 主要工作与产出 / 能力与方法沉淀 / 收获与不足 / 后续规划，按月梳理成长脉络）；② 3~5 条简历条目（动词开头，「做了什么 + 怎么做 + 结果」）。<strong>量化数字只取自工作条目，模型不替用户编。</strong></li>
+<li><strong>流式生成</strong>：POST 任务后走与抓取同一 SSE 通道，阶段进度（读取条目→分组→凝练）+ 正文<strong>逐字实时上屏</strong>。</li>
+<li><strong>输出结构</strong>：【业绩维度】总述 + 主要工作内容（按项目分组）+ 问题与反思 + 收获与成长；【文化维度】对照公司两大价值观（以客户为中心的价值洞察力 / 低成本短周期检验）。文字格式约定：小节加粗、条目数字编号（不带 <code>#</code>/<code>-</code>/<code>*</code>，便于直接使用）。</li>
+<li><strong>富文本编辑与复制</strong>：报告渲染成可编辑富文本（加粗 / 下划线 / 编号 / 项目符号工具栏），复制时携带 HTML+纯文本，<strong>粘进飞书文档 / Word 加粗、下划线、编号原样保留</strong>。</li>
+<li><strong>四层回退链</strong>（详见「六、关键设计决策」第 5 条）：流式 → 检出空正文 → <strong>加大额度</strong>的一次性重试 → 本地按项目罗列。<strong>只有真的落到最后一层才算降级</strong>，中间换路只是提示。</li>
+<li><strong>降级必须说清为什么</strong>：降级原因（未配 Key / 异常类型 / 网关回的 finish_reason 与 completion_tokens）随 SSE 的 completed 事件回传，前端黄条直接照念，同时写进正文 —— 进度通道的提示会被后一条盖掉，用户根本看不到。</li>
+<li><strong>复制并去绩效</strong>：用<strong>同步</strong>的 execCommand('copy') 复制富文本之后再开绩效标签页（异步 clipboard API 会因为失去用户手势而被浏览器拒绝）。绩效自评没有「写入自评正文」的开放接口，所以只能做到「复制好 + 送到门口」，最后一下 Ctrl+V 由用户自己按。</li>
+<li><strong>💬 对话改稿</strong>：报告生成后可以用大白话提修改要求（「第二段那个平台名写错了」「问题与反思太虚，结合第 3 条具体点」），大模型据此<strong>重写全文</strong> → 前端算<strong>逐行 diff 预览</strong> → 点「采用」才写回编辑器，另有单级<strong>撤销</strong>。</li>
+<li><strong>改稿失败绝不产出文本</strong>（与生成路径相反的取舍）：生成失败会退回本地罗列（「总要给用户一篇」），改稿不能 —— 用户手上已经有一篇好稿，退回罗列稿等于把它毁掉。所以失败只提示、编辑器一个字不动。</li>
+<li><strong>素材按生成时的范围快照取</strong>：改稿用的是生成那一刻的日期范围，不跟当前日期框走 —— 免得用户生成完改了日期，模型拿新范围去核对旧报告、把对的地方改错。</li>
+</ul>
+<hr />
+<h2 id="_4">四、功能模块</h2>
+<ul>
+<li><strong>✅ 每日工作确认</strong>（核心页）：日期切换、抓取入口 + 取消、进度条、待确认卡片逐卡确认/忽略/编辑、<strong>一键全部确认</strong>、手动新增；抓完自动切到所抓日期。</li>
+<li><strong>🗂️ 历史归档</strong>：已确认工作沉淀库；关键词搜索、月份网格 → 下钻按日分组；条目可补录 / 就地编辑 / 删除（可解除忽略记忆）；月视图提供 <strong>🧹 一键去重</strong>（同日重复合并，先预览后写库）。</li>
+<li><strong>📄 报告生成</strong>：见上文；支持编辑后复制；生成后还能 <strong>💬 对话改稿</strong>。</li>
+<li><strong>🎓 实习总结 → 简历条目</strong>：入职至今的全部已确认条目 → 五段式长文；再凝练成可直接写进简历的 3~5 条。两块结果各存各的、互不覆盖。</li>
+<li><strong>📊 我的工作画像</strong>：总条目 / 覆盖天数 / 项目数 / 日均产出，加投入 Top5、按月分布、最高产月份与最忙一天；<strong>纯前端计算，只看自己的已确认条目</strong>，不上传、看不到别人。</li>
+<li><strong>🎯 绩效自评</strong>：首页快捷入口，新标签页直达绩效主页；报告页配套「🎯 复制并去绩效」。只是入口，不读也不写绩效数据。</li>
+<li><strong>🕹️ 像素小鸟</strong>：摸鱼小游戏 + 服务端排行榜（每人最高分）。上榜身份可选「我的账号 / 匿名 / 自定义名字」，每个身份各记各的分。</li>
+<li><strong>🎁 最近上新</strong>：更新日志硬编码在前端，进站弹一次、叉掉即写入已读版本号（localStorage 独立 key，不进 ws_settings，免得被「恢复默认」连带清掉）；版本号变了才会再弹，首页常驻横条随时回看。</li>
+<li><strong>💴 来财</strong>：月薪/日薪（÷21.75 折算）、计薪模式（工作时段 09:00–18:00 可改 / 全天）、每秒实时跳动当日进账；纯前端。</li>
+<li><strong>🤖 大模型设置</strong>：每人自己的 Key / Base URL / 模型。</li>
+<li><strong>全站统计</strong>：累计浏览、累计抓取触发。</li>
+<li><strong>反馈墙</strong>：新功能需求 / 问题反馈，可点赞排序，<strong>可回复讨论</strong>（本人可删自己的回复，机主可删任何一条），机主可删卡片、可改每条的状态 —— 需求是「待处理 / 处理中 / 已上线」，问题反馈是「待处理 / 处理中 / 已修复」，提的人一眼能看出自己那条走到哪了。</li>
+<li><strong>🔔 站内通知</strong>：有人回复了<strong>我提的 / 我回复过的</strong>话题，或那几条的<strong>状态被改了</strong>，顶部铃铛亮红点并给出条数；点一下跳到那几条并记为已读（已读标记按人存在浏览器 localStorage，不落库）。<strong>别人之间的对话、别人的帖子被改状态，都不会打扰我。</strong></li>
+<li><strong>个性化</strong>：主题色、标语（含轮换）、入场动画。</li>
+<li><strong>机主管理</strong>：网页自助部署（白名单文件上传 → 语法校验 → 自动备份 → 自动重启）。</li>
+</ul>
+<hr />
+<h2 id="_5">五、技术架构</h2>
+<p><strong>设计原则</strong>：单文件前端（Tailwind 本地预编译后内联，零运行时构建）+ 单入口 FastAPI + 内存任务 + SSE 进度，一路沿用被验证过的轻量套路；新增能力均为增量模块，不在旧逻辑里打孔。</p>
+<pre><code>浏览器（单文件 SPA：backend/static/index.html）
+  Tailwind CSS（本地预编译、内联进 index.html）+ Alpine.js（CDN）
+  currentTool 控制「工具箱首页 + 单工具全屏页」
+        │  fetch('/api/xxx/submit') → task_id
+        │  EventSource('/api/task/{id}/stream') → 阶段进度 + 内容实时上屏
+        ▼
+后端（FastAPI，backend/main.py 单入口）
+  · 认证：/api/auth/feishu/start · /api/auth/feishu/exchange · /api/auth/logout · /api/me
+  · 抓取：/api/crawl/submit · /api/crawl/{task_id}/cancel
+  · 条目：/api/workitems（GET/POST）· /api/workitems/confirm · /api/workitems/{id}（DEL）
+  · 报告：/api/report/generate（POST → 流式 SSE）
+  · 其他：/api/settings(/llm) · /api/stats · /api/feedback · /api/bugreport · /api/admin/deploy
+  · 共用进度通道：/api/task/{task_id}/stream
+        │  submit 后 BackgroundTasks 起 _process_*，异步队列承接 SSE
+        ▼
+服务层（backend/services/）
+  · feishu_chat_service  抓取群聊/单聊/@我 消息（谓 feishu-sync）+ 上下文窗口组装
+  · llm_service          统一封装公司大模型网关（OpenAI 兼容）；_chat + _chat_stream
+  · aggregate_service    本地启发式凝练兜底 + 卡片过滤/相似度判定（忽略记忆、标题锚定）
+  · report_service       报告提示词 + 清洗 + 流式/兜底
+  · db                   唯一持久层（SQLite 库）
+        ▼
+外部依赖
+  · 飞书 OpenAPI（经 feishu-sync 包：list_chats / list_messages / 文档编辑）
+  · 公司大模型网关（/v1/chat/completions，支持 stream）
+</code></pre>
+<ul>
+<li>
+<p><strong>v0.5 新增端点</strong>：归档去重 /api/archive/dedup/scan（SSE 任务）· /api/archive/dedup/apply（同步写库）；小鸟榜单 /api/game/leaderboard · /api/game/score。去重扫描<strong>完全复用抓取那套 SSE 基建</strong>，没有新增事件类型。
+<strong>v0.6 / v0.7 新增端点</strong>：反馈回复 /api/feedback/{fid}/reply（POST / DELETE，fid 全局唯一、两个 tab 共用）；<strong>对话改稿 /api/report/revise（POST → 复用同一 SSE 通道）</strong>。抓取来源扩展走既有 /api/crawl/submit（只加勾选项）。三者都<strong>没有新增 SSE 事件类型</strong> —— 改稿收尾仍用既有的 completed / error。</p>
+</li>
+<li>
+<p><strong>v0.8 ~ v0.11 新增端点</strong>：反馈状态 <strong>/api/feedback/{fid}/status（POST，仅机主）</strong> —— 档位按 kind 分（见 db.FEEDBACK_STATUSES），路由按 db 层的返回码区分 400（值不在该 kind 的档位里）与 404（条目不存在）。站内通知<strong>没有新端点</strong> —— 前端在既有的 /api/feedback + /api/bugreport 返回体上算未读，已读标记只存浏览器。</p>
+</li>
+</ul>
+<h3 id="sqlite">数据模型（SQLite 库）</h3>
+<table>
+<thead><tr><th>表</th><th>关键字段</th><th>说明</th></tr></thead>
+<tr><td>users</td><td>open_id PK, name, refresh_token, access_token, llm_api_key/base_url/model</td><td>每人一行；含凭证字段，仅存云端</td></tr>
+<tr><td>sessions</td><td>session_token PK, open_id, expires_at</td><td>30 天会话</td></tr>
+<tr><td>raw_messages</td><td>message_id PK, chat_id/name, sender_id/type, text, create_time, is_mine, work_date, owner_open_id</td><td>原始消息留痕（抓取回溯用）</td></tr>
+<tr><td>work_items</td><td>id PK, work_date, title, detail, project, source_count, status(pending/confirmed/ignored), sig, owner_open_id</td><td>卡片；sig 是忽略记忆/幂等锚定的指纹</td></tr>
+<tr><td>feedback</td><td>kind(feature/bug), content, votes, status, owner_open_id</td><td>全站反馈墙；status 按 kind 分档（问题：待处理 / 处理中 / 已修复，需求：待处理 / 处理中 / 已上线），仅机主可改</td></tr>
+<tr><td>site_stats</td><td>views, triggers</td><td>单行计数</td></tr>
+<tr><td>feedback_replies</td><td>id PK, feedback_id, owner_open_id, name, content, created_at</td><td>反馈墙回复；署名由服务端从 users 表反查</td></tr>
+</table>
+
+<h3 id="_6">任务与并发</h3>
+<ul>
+<li>抓取 / 报告都是「submit → asyncio.Queue → <code>asyncio.to_thread(流水线, on_progress)</code> → SSE」：线程里产生的进度用 <code>loop.call_soon_threadsafe</code> 投递，杜绝跨线程直接写队列。</li>
+<li>任务是内存态（重启即丢，个人工具可接受）；已抓数据 / 卡片已在 SQLite 持久化。</li>
+<li>数据库单连接 + 锁，多用户低并发足够。</li>
+</ul>
+<hr />
+<h2 id="_7">六、关键设计决策</h2>
+<ol>
+<li><strong>模型只做分组、代码做合并</strong>：卡片身份（标题）必须确定可复现——这是「重抓幂等」和「忽略记忆」的地基。模型输出不存在时，一切以标题哈希为键的记忆机制都会失效；合并的"事实"（标题/详情）由代码从输入卡里选，模型犯错最坏只是少合并。</li>
+<li><strong>任务识别 </strong><code>temperature=0</code>：同一输入必须产出可复现标题；抓取、单聊、小群、@我 四路识别全部 <code>temperature=0</code>，合并也是。</li>
+<li><strong>标题锚定（_stabilize_titles）</strong>：重抓时把新标题向上一轮 pending 标题对齐（语义相似 + 共享专有名词）；同一天连抓两次标题集合完全一致。</li>
+<li><strong>忽略记忆双层</strong>：精确 <code>sig</code> 主路径 + 「同项目 + 相似度 + 共享专有名词」模糊兜底；容忍模型改写，不误杀同群里不同任务。</li>
+<li><strong>四层回退链，且「降级」只指最后一层</strong>：报告生成依次是 ① 流式 → ② 检出空正文（流式一个字都没回）→ ③ <strong>加大输出额度</strong>的一次性重试 → ④ 本地按项目罗列。中间换路只发 notice（告诉用户「换了条路」），<strong>只有落到 ④ 才发 degraded</strong>。把 notice 当降级信号，会让大模型实打实写出来的报告挂上「这篇不是大模型写的」，还把配好了 Key 的人指去查一个没问题的 Key —— 2026-09-22 线上就这么冤枉过一篇。</li>
+<li><strong>重试必须换个打法</strong>：空正文的成因是额度被模型的思考过程吃光，不是网络抖动 —— 用同样的额度再打一趟只会一模一样地再空一次，纯属浪费用户的等待时间。所以第二趟把额度翻倍（上限 32000），而不是原样重试。</li>
+<li><strong>max_tokens 对推理型模型是「思考 + 正文」的总额度</strong>，不是正文额度。一篇周报正文撑死 1500 token，思考却能轻松吃掉好几千：线上曾给 3600，结果 finish_reason=length、completion_tokens=3600、正文一个字都没有 —— 额度全花在思考上。现按「正文所需 × 数倍」给（周报月报 12000 / 实习总结 20000 / 简历条目 6000），超时同步放大（300 / 420 / 240 秒），因为思考阶段网关一个字节都不吐、额度越大这段静默越长。额度只是上限、按实际生成计费：<strong>给大了不额外花钱，给小了轻则正文被截断、重则整篇空白。</strong></li>
+<li><strong>前端永远不裸显示 markdown</strong>：报告统一渲染成富文本；复制走 <code>text/html + text/plain</code> 双通道，粘到飞书 / Word 格式不丢。</li>
+<li><strong>凭证不入代码</strong>：<code>.env</code>、<code>llm keys</code>、<code>refresh_token</code> 只存服务端 SQLite / 环境变量；云端 `/root/凭证目录 为机主个人凭证，严禁外发。</li>
+<li><strong>改稿失败绝不产出文本</strong>（与生成路径相反的取舍）：生成失败会退回本地罗列 —— 「总要给用户一篇东西」；改稿不能这样，用户手上已经有一篇好稿，退回一篇罗列稿等于把它毁掉。所以改稿失败只发 error、编辑器一个字不动，且<strong>绝不退回本地兜底</strong>。改稿也<strong>不落库、不碰 work_items</strong>：报告本来就不落库，服务端全程无状态，成稿由前端带上来。</li>
+<li><strong>改稿走「全文重写 + 逐行 diff 预览」，不做「查找串 → 替换串」补丁</strong>：模型给的查找串经常和原文对不上（标点 / 全半角 / 空格），改不上还不报错。重写必然漂移，所以「采用」之前必须让用户看见逐行差异；diff 在 <strong>markdown</strong> 上算（即发给模型的那份），不在 HTML 上算。</li>
+<li><strong>改稿素材按「生成时那个日期范围」快照取</strong>：reportStart / reportEnd 是活的，用户生成完可能又去改日期。若改稿按新范围取素材，模型核对事实的依据就和这篇报告对不上 —— 会把原本正确的地方改错。生成时把范围快照下来，改稿带上它。</li>
+<li><strong>状态档位按 kind 分，且白名单只有一份</strong>：问题反馈与功能需求的档位不同（问题止于「已修复」，需求止于「已上线」），所以白名单是 {kind: (...)} 而不是一个扁平集合。校验下沉到 db 层 —— 改状态本来就要先查这一行，顺手就能拿到 kind。路由不再自己判一遍：两份白名单必然漂移，而漂移的表现是「某个 tab 改状态永远 400」。</li>
+<li><strong>站内通知的已读标记是「最后一条别人回复的 id + 当时的状态」，不是时间戳</strong>：消息时间是分钟粒度（now 截到分钟），同一分钟内「我看完 → 对方又回一条」会比不出先后、直接漏报。标记从裸回复 id 升级成 {r, s} 时，<strong>老格式一律认成「不知道状态」</strong> —— 否则上线瞬间，我参与过的每条帖子都会因为状态从空被补成「待处理」而集体报一次未读，一次误报就够让人不信这个红点。用户下次点铃铛写回新格式后自愈。</li>
+<li><strong>下拉框的选中态必须绑在 option 上，不能写成 select 的 :value</strong>：Alpine 按文档顺序初始化，select 上的 :value 会<strong>先于</strong>子级 x-for 求值，那一刻还没有任何 option，值对不上就退回显示第一项 —— 现象是「不管真实状态是什么，每张卡片都显示待处理」。绑 :selected 是在每个 option 建出来之后才求值，顺序天然正确。这类 bug <strong>离线测试和 DOM 属性检查都看不出来</strong>，只有截图能发现。</li>
+</ol>
+<hr />
+<h2 id="_8">七、数据与隐私</h2>
+<ul>
+<li>每人只能看到、抓取、汇总<strong>自己的</strong>飞书消息（raw_messages / work_items 均带 owner_open_id）。</li>
+<li>本地库 含各人 refresh_token 与大模型 key —— 敏感文件，仅存云端机，<strong>不外传、不截图、不纳入版本控制（gitignore）</strong>。</li>
+<li>全部数据只留在个人云端机本地，不做任何外发；报告中的公司数据不离开内网。</li>
+<li>内网文档（教程、本方案）读写一律走机主本地 `~/凭证目录 凭证 + feishu-sync，不走任何公开抓取通道。</li>
+</ul>
+<hr />
+<h2 id="_9">八、部署与运维</h2>
+<ul>
+<li><strong>形态</strong>：云端机 Python venv + systemd（服务 <code>work-summary.service</code>），非 Docker；uvicorn 常驻 8002 端口。</li>
+<li><strong>自助部署</strong>：机主在网页上传白名单内文件 → 服务端校验（<code>.py</code> 语法检查 + 路径白名单）→ 落盘备份 <code>.bak_时间戳</code> → <code>.py</code> 经 <code>systemd-run --on-active=2s</code> 平滑重启（~10-14s），<code>.html</code> 不重启、用户 Ctrl+F5 生效。响应回传落盘 md5，可核对一致性。</li>
+<li><strong>数据库</strong>：单文件 本地库，定时不用管（个人工具量级）；取消/重启不丢已持久化数据。</li>
+<li><strong>改表结构只能靠启动迁移</strong>：线上那台机器 SSH 不通、部署通道只能推文件、跑不了 SQL，所以 init_db() 里带了一批幂等启动迁移（建表 / 补列 / 回填老数据），每次启动跑一遍、补完即 0 行。新增字段优先走「读时兜底」，必须回填老数据时才加一段 —— 那是唯一够得着表的时机。</li>
+</ul>
+<hr />
+<h2 id="_10">九、风险与注意事项</h2>
+<table>
+<thead><tr><th>风险</th><th>应对</th></tr></thead>
+<tr><td>飞书消息读取权限</td><td>feishu-sync 只读本人所在会话；OAuth 授权、token 自动保活</td></tr>
+<tr><td>私聊隐私</td><td>单聊/小群为「可选勾选」来源且默认关；数据仅留云端本机、不外传</td></tr>
+<tr><td>大模型筛选/聚合准确性</td><td>人工确认兜底 + 原始消息落库可追溯；prompt 可迭代；任务格式要求可复现</td></tr>
+<tr><td>模型改写导致忽略记忆失效</td><td>sig 精确 + 同项目模糊双兜底；极端改写（连专有名词都换）仍是小概率，再忽略一次即稳定</td></tr>
+<tr><td>大模型成本</td><td>只处理选定时间窗、一次批量；合并/识别均单次调用</td></tr>
+<tr><td>手动触发依赖人</td><td>页面明确提示补抓（当天/前一天/范围）；远期可加定时</td></tr>
+<tr><td>任务状态存内存</td><td>重启丢瞬时进度，可接受（个人工具）；已落库数据不受影响</td></tr>
+<tr><td>凭证安全</td><td>密钥全走服务端存储/环境变量；凭证目录与本地库 严禁外发、不截图</td></tr>
+<tr><td>推理型模型把输出额度吃光</td><td>max_tokens 按「思考 + 正文」总量给足；检出空正文自动翻倍重试；仍失败才本地兜底，并把 finish_reason / completion_tokens 写进正文，让用户一眼看出是额度问题还是配置问题</td></tr>
+<tr><td>归档合并误伤（没有重建退路）</td><td>先预览、逐组可取消；只合并同一天内的；服务端重新校验归属 / 状态 / 同日；单事务写库</td></tr>
+<tr><td>改稿把好稿改坏</td><td>服务端只回全文、不落盘；逐行 diff 预览 + 「采用」才写回 + 单级撤销；失败路径绝不产出文本（只发 error，编辑器不动）；素材按生成时范围快照取，避免拿新范围核对旧报告</td></tr>
+<tr><td>状态变更通知集体误报</td><td>已读标记从裸回复 id 升级成 {回复 id, 状态} 时，老格式统一认成「不知道状态」、不参与状态比对 —— 否则上线瞬间，我参与过的每条帖子都会因状态从空补成「待处理」集体报一次未读</td></tr>
+</table>
+
+<hr />
+<h2 id="_11">十、对外演示站（脱敏静态版）</h2>
+<blockquote>
+<p>线上版只能在内部网络访问，没法拿给别人看。这一节记录「把同一个工具做成外网可直接打开的静态站」是怎么做的、以及为什么这么做。</p>
+</blockquote>
+<h3 id="_12">目标与三条硬约束</h3>
+<ul>
+<li><strong>不改前端源码</strong>：演示版不能是从线上 <code>index.html</code> 抄一份改出来的 —— 那样线上每改一次，演示版就烂一次。做法是前端<strong>一行都不改</strong>，只把它身后的后端换掉。</li>
+<li><strong>不带真实数据</strong>：库里是真实姓名、群聊原文、内部项目名，还有凭证字段。发到公网等于泄露，对求职也是负资产。</li>
+<li><strong>要真的能点</strong>：不是截图拼的静态页 —— 确认卡片、点赞、回复、生成报告都得能操作，而且刷新后还在。</li>
+</ul>
+<h3 id="shim">做法：静态快照 + 一层 shim</h3>
+<p>前端约 40 个请求全部汇集到 <code>api()</code> 里的那<strong>一个</strong> <code>fetch(url, opts)</code>，所以在 <code>window.fetch</code> 上装一张路由表就能全覆盖。唯一绕开 fetch 的是 <code>EventSource</code>（抓取进度、报告流式生成、改稿、去重扫描四条流），单独接管 <code>window.EventSource</code>，用 <code>setTimeout</code> 回放预设的事件序列。</p>
+<ul>
+<li><strong>构建期</strong>：把线上那份 <code>index.html</code> 原样搬过来，只在末尾按固定顺序追加「演示数据 → shim → Alpine」。每一处改写都要求<strong>恰好命中一次</strong>，命中数不对就直接失败 —— 上游一改，这里立刻炸掉，而不是悄悄产出一个半坏的页面。</li>
+<li><strong>运行期</strong>：所有写操作落在浏览器 <code>localStorage</code>，所以「确认一张卡 → 刷新还在」；页面上有「重置演示数据」回到初始状态。</li>
+<li><strong>演示数据</strong>全部编造，用中性的软件实习场景，覆盖每个功能面；日期相对「今天」生成，所以演示站不会看起来发霉。</li>
+</ul>
+<h3 id="_13">脱敏闸门（发布前必跑）</h3>
+<p><code>check_public.py</code> 从线上库<strong>只读</strong>拉出真实姓名、群名、项目名、<code>open_id</code>（只在内存里，不落盘、不打印原文），反过来逐行扫仓库里每一个要公开的文本文件；再叠一份内网域名 / 内网 IP / 凭证形状的黑名单。命中即失败并列出位置。</p>
+<p>它带<strong>自检</strong>：拿一条真实词条当探针走一遍匹配路径，确认「能命中、且干净文本不误报」—— 否则黑名单读空了，闸门照样打印「全部通过」，比没有闸门更危险。</p>
+<h3 id="_14">踩到的两个坑</h3>
+<ul>
+<li><strong>Alpine 的初始化时机</strong>：内联在 <code>&lt;head&gt;</code> 里会白屏 —— 它的 CDN 构建末尾是 <code>queueMicrotask(() =&gt; Alpine.start())</code>，而 <code>start()</code> 在 <code>document.body</code> 还不存在时会直接放弃初始化。原本靠 <code>&lt;script defer&gt;</code> 撑到 DOM 解析完，<strong>内联脚本不吃 defer</strong>，挪到 <code>&lt;/body&gt;</code> 前才正常。</li>
+<li><strong>shim 必须装得比 Alpine 早</strong>：Alpine 一 <code>start()</code> 就会跑 <code>x-init</code> 里的初始化，那一刻 <code>fetch('/api/me')</code> 必须已经被接管，否则整站停在登录门。</li>
+</ul>
+<h3 id="_15">与线上版的差异</h3>
+<ul>
+<li>数据：编造的演示数据，不是真实数据</li>
+<li>后端：<code>window.fetch</code> / <code>window.EventSource</code> 上的 shim，不发任何真实网络请求</li>
+<li>登录：恒为已登录状态，没有真的 OAuth 流程</li>
+<li>链接：指向内部系统的入口（使用教程、绩效系统）已改为站内页面或占位地址</li>
+</ul>
+<hr />
+<h2 id="_16">十一、迭代记录与远景</h2>
+<table>
+<thead><tr><th>版本</th><th>时间</th><th>关键变化</th></tr></thead>
+<tr><td>v0.1</td><td>2026-08 前</td><td>单人本地验证：抓取 + 凝练 + 确认</td></tr>
+<tr><td>v0.2</td><td>—</td><td>初步设计方案（单人 / 定时 / Docker 设想，部分未落地）</td></tr>
+<tr><td>v0.3</td><td>2026-09</td><td>多用户版上线：OAuth 登录、open_id 隔离、每人自己的 Key、统计/反馈墙/主题色、网页自助部署</td></tr>
+<tr><td>v0.4</td><td>2026-09-10</td><td>抓取新增「单聊/小群布置」「群里@我」来源；跨来源语义合并；重抓幂等 + 忽略记忆模糊兜底；报告改流式生成 + 富文本编辑复制</td></tr>
+<tr><td>v0.4.1</td><td>2026-09 中旬</td><td>产出形态扩展：🎓 实习总结 → 简历条目、📊 我的工作画像、报告三种文体（叙述式 / 提纲式 / 要点式）、🕹️ 像素小鸟 + 排行榜</td></tr>
+<tr><td>v0.4.2</td><td>2026-09-20</td><td>抓取稳定性：网关返回空正文时自动拆批重试；抓取降级提示区分「重抓就好」与「先去检查大模型配置」。（＝页面更新日志 v0.3）</td></tr>
+<tr><td>v0.4.3</td><td>2026-09-21</td><td>归档月视图「🧹 一键去重」（同日重复，文本 + 语义两层判重，先预览后写库）；首页「最近上新」（进站弹一次 + 常驻横条）。（＝页面更新日志 v0.4）</td></tr>
+<tr><td>v0.5</td><td>2026-09-22</td><td>🎯 绩效自评直达 +「复制并去绩效」；报告空正文防护（加大额度重试 → 本地兜底）；max_tokens 按「思考 + 正文」重定额度，修掉正文被截断 / 整篇空白；降级黄条只在真兜底时出现，并说明真实原因。（＝页面更新日志 v0.5）</td></tr>
+<tr><td>v0.6</td><td>2026-09-23</td><td>抓取来源再扩：可选「含我写的文档」（个人云文档 / 知识库，只看我名下且最后由我编辑的，妙记除外，需已配大模型）；反馈墙支持回复（本人 / 机主可删）。（＝页面更新日志 v0.6）</td></tr>
+<tr><td>v0.7</td><td>2026-09-23</td><td>报告「💬 对话改稿」：大白话提要求 → 大模型全文重写 → 逐行 diff 预览 → 「采用」才写回、可单级撤销；改稿失败绝不产出文本，也不碰 work_items。（＝页面更新日志 v0.7）</td></tr>
+<tr><td>v0.8</td><td>2026-09-24</td><td>稳定性与引导：前端样式不再依赖外部 CDN、改成本地预编译内联（修掉页面偶尔整个失去排版）；降级 / 抓取告警旁配「去设置填 Key」直达按钮。（＝页面更新日志 v0.8）</td></tr>
+<tr><td>v0.9</td><td>2026-09-24</td><td>待确认卡片「✅ 全部确认」：一次确认当前列出的那一批，逐张复用单张确认的接口、顺序发不并发。（＝页面更新日志 v0.9）</td></tr>
+<tr><td>v0.10</td><td>2026-09-24</td><td>🔔 站内通知：有人回复我提的 / 我参与过的话题，顶部铃铛亮红点、点一下直达；问题反馈状态机主可改（待处理 / 处理中 / 已修复）。（＝页面更新日志 v0.10）</td></tr>
+<tr><td>v0.11</td><td>2026-09-24</td><td>新功能需求也能标状态（待处理 / 处理中 / 已上线），档位按 kind 分；状态变化同样计入站内通知。（＝页面更新日志 v0.11）</td></tr>
+<tr><td>v0.12</td><td>2026-10-09</td><td>对外演示站：把同一个前端做成脱敏数据的静态版，外网可直接打开（零前端改动 —— 静态快照 + fetch / EventSource shim）；发布前跑脱敏闸门。（＝页面更新日志 v0.12）</td></tr>
+</table>
+
+<p><strong>远景（未做）</strong>：定时自动抓取；报告一键导出飞书文档；移动端适配；报告多语言/汇报模板。</p>  </article>
+</main>
+<footer>
+  演示站数据全部为虚构，不含任何真实姓名、群名、项目名或凭证 ·
+  <a href="./">回到演示站</a>
+</footer>
 </body>
 </html>
