@@ -141,9 +141,9 @@ footer { max-width:1100px; margin:0 auto; padding:0 24px 48px;
 <li>自动抓取我在飞书的发言（含别人布置给我、点名要我做的事）</li>
 <li>大模型把围绕同一件事的碎消息<strong>凝练合并成一张工作卡片</strong></li>
 <li>用户逐卡确认 / 忽略 / 编辑，确认的进入历史归档</li>
-<li>按周 / 月一键生成正式报告（业绩维度 + 文化维度），可直接排版、富文本复制
-<strong>演进</strong>：v0.1 单人本地验证 → v0.2 初步方案设计 → v0.3 多用户版上线（OAuth 登录、数据按人隔离）→ v0.4 抓取来源扩展（@我 / 单聊 / 小群）+ 跨来源自动合并 + 报告流式生成与富文本编辑 → v0.5 产出形态扩展（实习总结 / 简历条目、工作画像、报告三种文体）+ 归档一键去重 + 空正文兜底与降级归因 → v0.6 抓取来源再扩（含我写的文档）+ 反馈墙可回复 → v0.7 报告对话改稿（全文重写 + 逐行 diff 预览 + 采用才写回）→ v0.8 稳定性与引导（前端样式改本地内联、排错提示配直达按钮）→ v0.9 待确认卡片一键全确认 → v0.10 站内通知（铃铛）+ 问题反馈状态可改→ v0.11 需求状态可改（待处理 / 处理中 / 已上线）+ 状态变化也提醒 → v0.12 对外演示站（脱敏静态版：零前端改动，静态快照 + fetch / EventSource shim）。</li>
+<li>按周 / 月一键生成正式报告（业绩维度 + 文化维度），可直接排版、富文本复制</li>
 </ul>
+<p><strong>演进</strong>：v0.1 单人本地验证 → v0.2 初步方案设计 → v0.3 多用户版上线（OAuth 登录、数据按人隔离）→ v0.4 抓取来源扩展（@我 / 单聊 / 小群）+ 跨来源自动合并 + 报告流式生成与富文本编辑 → v0.5 产出形态扩展（实习总结 / 简历条目、工作画像、报告三种文体）+ 归档一键去重 + 空正文兜底与降级归因 → v0.6 抓取来源再扩（含我写的文档）+ 反馈墙可回复 → v0.7 报告对话改稿（全文重写 + 逐行 diff 预览 + 采用才写回）→ v0.8 稳定性与引导（前端样式改本地内联、排错提示配直达按钮）→ v0.9 待确认卡片一键全确认 → v0.10 站内通知（铃铛）+ 问题反馈状态可改→ v0.11 需求状态可改（待处理 / 处理中 / 已上线）+ 状态变化也提醒 → v0.12 对外演示站（脱敏静态版：零前端改动，静态快照 + fetch / EventSource shim）。</p>
 <hr />
 <h2 id="_2">二、用户与账号体系</h2>
 <ul>
@@ -253,13 +253,9 @@ footer { max-width:1100px; margin:0 auto; padding:0 24px 48px;
   · 公司大模型网关（/v1/chat/completions，支持 stream）
 </code></pre>
 <ul>
-<li>
-<p><strong>v0.5 新增端点</strong>：归档去重 /api/archive/dedup/scan（SSE 任务）· /api/archive/dedup/apply（同步写库）；小鸟榜单 /api/game/leaderboard · /api/game/score。去重扫描<strong>完全复用抓取那套 SSE 基建</strong>，没有新增事件类型。
-<strong>v0.6 / v0.7 新增端点</strong>：反馈回复 /api/feedback/{fid}/reply（POST / DELETE，fid 全局唯一、两个 tab 共用）；<strong>对话改稿 /api/report/revise（POST → 复用同一 SSE 通道）</strong>。抓取来源扩展走既有 /api/crawl/submit（只加勾选项）。三者都<strong>没有新增 SSE 事件类型</strong> —— 改稿收尾仍用既有的 completed / error。</p>
-</li>
-<li>
-<p><strong>v0.8 ~ v0.11 新增端点</strong>：反馈状态 <strong>/api/feedback/{fid}/status（POST，仅机主）</strong> —— 档位按 kind 分（见 db.FEEDBACK_STATUSES），路由按 db 层的返回码区分 400（值不在该 kind 的档位里）与 404（条目不存在）。站内通知<strong>没有新端点</strong> —— 前端在既有的 /api/feedback + /api/bugreport 返回体上算未读，已读标记只存浏览器。</p>
-</li>
+<li><strong>v0.5 新增端点</strong>：归档去重 /api/archive/dedup/scan（SSE 任务）· /api/archive/dedup/apply（同步写库）；小鸟榜单 /api/game/leaderboard · /api/game/score。去重扫描<strong>完全复用抓取那套 SSE 基建</strong>，没有新增事件类型。</li>
+<li><strong>v0.6 / v0.7 新增端点</strong>：反馈回复 /api/feedback/{fid}/reply（POST / DELETE，fid 全局唯一、两个 tab 共用）；<strong>对话改稿 /api/report/revise（POST → 复用同一 SSE 通道）</strong>。抓取来源扩展走既有 /api/crawl/submit（只加勾选项）。三者都<strong>没有新增 SSE 事件类型</strong> —— 改稿收尾仍用既有的 completed / error。</li>
+<li><strong>v0.8 ~ v0.11 新增端点</strong>：反馈状态 <strong>/api/feedback/{fid}/status（POST，仅机主）</strong> —— 档位按 kind 分（见 db.FEEDBACK_STATUSES），路由按 db 层的返回码区分 400（值不在该 kind 的档位里）与 404（条目不存在）。站内通知<strong>没有新端点</strong> —— 前端在既有的 /api/feedback + /api/bugreport 返回体上算未读，已读标记只存浏览器。</li>
 </ul>
 <h3 id="sqlite">数据模型（SQLite 库）</h3>
 <table>

@@ -52,7 +52,7 @@ RULES = [
     # 飞书图片 token —— 内网图床，外网取不到，且原图是真实数据截图
     (r"!\[\]\(image_token=[^)]*\)", ""),
     # 内部称谓中性化
-    (r"公司内网电脑", "任意一台电脑"),
+    (r"公司内网电脑", "一台电脑"),
     (r"公司内网", "本地部署"),
     (r"同事", "用户"),
     # 与演示站口径保持一致（演示站里这张卡叫「绩效自评」）
@@ -101,25 +101,52 @@ SECTION_NOTES = {
 LIST_RE = re.compile(r"^\s*(?:[-*+]|\d+[.)])\s+")
 FENCE_RE = re.compile(r"^\s*(?:```|~~~)")
 BREAK_RE = re.compile(r"^\s*(?:-{3,}|\*{3,}|_{3,})\s*$")
+# 普通段落行：顶格，且不是列表 / 标题 / 引用 / 围栏
+PLAIN_RE = re.compile(r"^(?![ \t#>`])(?![-*+]\s)(?!\d+[.)]\s)\S")
 
 
 def normalize_md(md):
-    """飞书导出的 markdown 经常缺空行。缺空行会让「列表」「---」被吞进上一段 ——
-    更糟的是 `段落\\n---` 会被当成 setext 二级标题。所以在它们前面补空行。
-    代码围栏内、以及缩进的嵌套列表不动。"""
+    """飞书导出的 markdown 经常缺空行，两头都要防：
+
+    - 列表 / `---` 直接跟在段落后面 → 被吞进上一段；`段落\\n---` 还会被当成
+      setext 二级标题。所以在它们前面补空行。
+    - 反过来，普通段落直接跟在**列表项**后面 → markdown 把它当成上一项的「懒惰续行」
+      并进去。设计方案里「**演进**：v0.1 …」那一整句、以及「v0.6 / v0.7 新增端点」
+      那几段就这么被吞进了上面的列表项，公网上看着像列表的一部分。
+
+    但如果这条裸行的**下一行又是列表项**（设计方案里「**v0.6 / v0.7 新增端点**」那句），
+    补空行会把列表劈成两半、还丢掉它自己的项目符号 —— 这种补回同款符号即可。
+
+    **只对列表项补**，引用块不补：read_live 渲染引用块时只给第一行加 `>`，第二行起
+    是裸的 —— 那是同一个引用块里的换行，补空行会把后半句甩出引用框（试过，回退了）。
+
+    代码围栏内不动；缩进的续行 / 嵌套列表不动（飞书的列表续行都是缩进的）。"""
+    lines = md.splitlines()
     out = []
     in_fence = False
     prev = ""
-    for line in md.splitlines():
+    for i, line in enumerate(lines):
+        nxt = lines[i + 1] if i + 1 < len(lines) else ""
         if FENCE_RE.match(line):
             in_fence = not in_fence
         if not in_fence and prev.strip():
+            if (PLAIN_RE.match(line) and LIST_RE.match(prev) and LIST_RE.match(nxt)
+                    and not prev.startswith((" ", "\t"))):
+                # 夹在两条列表项之间的裸行：原样留着会把列表劈成两半，补回同款项目符号
+                line = LIST_RE.match(prev).group(0) + line
+                out.append(line)
+                prev = line             # 让下一项仍被当成列表项，否则列表会被判成「松散」、各项套上 <p>
+                continue
             if BREAK_RE.match(line):
                 out.append("")          # 段落/列表 后面直接跟 --- → 补空行
             elif (LIST_RE.match(line)
                   and not LIST_RE.match(prev)
                   and not prev.startswith((" ", "\t"))):
                 out.append("")          # 段落后面直接跟列表 → 补空行
+            elif (PLAIN_RE.match(line) and LIST_RE.match(prev)
+                  and not prev.startswith((" ", "\t"))):
+                out.append("")          # 顶层列表项后面直接跟段落 → 补空行（否则被当成懒惰续行吞进去）
+                                        # 缩进的嵌套项后面不补：那是飞书的列表续行，本来就是同一项
         out.append(line)
         prev = line
     return "\n".join(out)
