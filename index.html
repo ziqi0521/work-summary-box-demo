@@ -4283,6 +4283,9 @@ function app() {
   ];
 
   window.__DEMO__ = {
+    // 数据集版本：改了 items/stats 这类初始数据就 +1。shim 会拿它跟 localStorage
+    // 里的存档比，对不上就丢掉旧存档重来 —— 否则老访客一直看着上一次的数据。
+    dataVersion: 1,
     me: { open_id: ME, name: '演示用户' },
     isAdmin: true,
     settings: {
@@ -4335,6 +4338,7 @@ function app() {
   // ---------------------------------------------------------------- 状态
   function fresh() {
     return JSON.parse(JSON.stringify({
+      dataVersion: DATA.dataVersion,
       items: DATA.items,
       feedback: DATA.feedback,
       leaderboard: DATA.leaderboard,
@@ -4346,7 +4350,9 @@ function app() {
       var raw = localStorage.getItem(KEY);
       if (raw) {
         var p = JSON.parse(raw);
-        if (p && p.items && p.feedback) return p;
+        // 版本对不上就丢掉旧存档：换了演示数据集之后，老访客不该继续看着上一次的
+        // 卡片和统计数字（他们不会自己去点「重置」）。
+        if (p && p.items && p.feedback && p.dataVersion === DATA.dataVersion) return p;
       }
     } catch (e) { /* 坏数据当作没有 */ }
     return fresh();

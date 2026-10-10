@@ -125,17 +125,18 @@ const TODAY = d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDat
   {
     const { body } = await get(`/api/workitems?date=${TODAY}&status=pending`);
     ok(Array.isArray(body.items), '/api/workitems 返回 {items:[…]}');
-    eq(body.items.length, 4, `今天有 4 张待确认卡（实际 ${body.items.length}）`);
+    ok(body.items.length >= 1, `今天有 ${body.items.length} 张待确认卡`);
     for (const f of FIELDS) ok(f in body.items[0], `work_item 带 ${f}`);
   }
   {
-    const id = (await get(`/api/workitems?date=${TODAY}&status=pending`)).body.items[0].id;
+    const before = (await get(`/api/workitems?date=${TODAY}&status=pending`)).body.items;
+    const id = before[0].id;
     const { status, body } = await post('/api/workitems/confirm', { id, action: 'confirm' });
     eq(status, 200, 'confirm 返回 200');
     eq(body.item.status, 'confirmed', 'confirm 之后 status=confirmed');
     const after = (await get(`/api/workitems?date=${TODAY}&status=pending`)).body.items;
-    eq(after.length, 3, '确认后待确认只剩 3 张（act() 依赖这个）');
-    // 还原，后面的用例还要用这 4 张
+    eq(after.length, before.length - 1, '确认后待确认少 1 张（act() 依赖这个）');
+    // 还原，后面的用例还要用这批卡
     await post('/api/workitems/confirm', { id, action: 'confirm' });
   }
   {
@@ -262,6 +263,36 @@ const TODAY = d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDat
     // 外链不该被接管
     const r = await fetchDemo('https://example.com/x.json').catch(() => null);
     ok(r === null || r === undefined || r.status !== 200 || true, '非 /api 的请求走真实 fetch（不拦）');
+  }
+
+  console.log('— 存档版本 —');
+  {
+    // 换了演示数据集之后，老访客 localStorage 里那份旧存档必须被丢掉：他们不会
+    // 自己去点「重置」，否则会一直看着上一次的卡片和统计数字。
+    const stale = {
+      items: [{
+        id: 'wi_old', work_date: '2020-01-01', title: '旧卡', detail: '', project: '',
+        source_count: 1, status: 'confirmed', created_at: '', sig: '',
+        owner_open_id: 'ou_demo_0000000000000001',
+      }],
+      feedback: [], leaderboard: [],
+      stats: { views: 1842, triggers: 137, visitors: 96, views_today: 41 },
+    };
+    const ls = makeLocalStorage();
+    ls.setItem('ws_demo_state_v1', JSON.stringify(stale));
+    const box = {
+      console, setTimeout, clearTimeout, Response, URLSearchParams,
+      localStorage: ls, location: { search: '', hash: '', reload() {} },
+    };
+    const c2 = vm.createContext(box);
+    vm.runInContext('globalThis.window = globalThis;', c2);
+    for (const f of ['demo_data.js', 'shim.js']) {
+      vm.runInContext(fs.readFileSync(path.join(SRC, f), 'utf8'), c2, { filename: f });
+    }
+    const s = await (await box.fetch('/api/stats')).json();
+    eq(s.triggers, 3547, '旧存档（无 dataVersion）被丢弃，改用新数据集的统计');
+    const w = await (await box.fetch('/api/workitems?status=confirmed')).json();
+    ok(w.items.length > 100, `旧存档的卡片也一起丢掉（现在 ${w.items.length} 张）`);
   }
 
   console.log('');

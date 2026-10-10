@@ -304,6 +304,9 @@
   ];
 
   window.__DEMO__ = {
+    // 数据集版本：改了 items/stats 这类初始数据就 +1。shim 会拿它跟 localStorage
+    // 里的存档比，对不上就丢掉旧存档重来 —— 否则老访客一直看着上一次的数据。
+    dataVersion: 1,
     me: { open_id: ME, name: '演示用户' },
     isAdmin: true,
     settings: {

@@ -21,6 +21,7 @@
   // ---------------------------------------------------------------- 状态
   function fresh() {
     return JSON.parse(JSON.stringify({
+      dataVersion: DATA.dataVersion,
       items: DATA.items,
       feedback: DATA.feedback,
       leaderboard: DATA.leaderboard,
@@ -32,7 +33,9 @@
       var raw = localStorage.getItem(KEY);
       if (raw) {
         var p = JSON.parse(raw);
-        if (p && p.items && p.feedback) return p;
+        // 版本对不上就丢掉旧存档：换了演示数据集之后，老访客不该继续看着上一次的
+        // 卡片和统计数字（他们不会自己去点「重置」）。
+        if (p && p.items && p.feedback && p.dataVersion === DATA.dataVersion) return p;
       }
     } catch (e) { /* 坏数据当作没有 */ }
     return fresh();
