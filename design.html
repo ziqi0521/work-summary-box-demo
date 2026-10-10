@@ -113,15 +113,7 @@ footer { max-width:1100px; margin:0 auto; padding:0 24px 48px;
 <li><a href="#_8">七、数据与隐私</a></li>
 <li><a href="#_9">八、部署与运维</a></li>
 <li><a href="#_10">九、风险与注意事项</a></li>
-<li><a href="#_11">十、对外演示站（脱敏静态版）</a><ul>
-<li><a href="#_12">目标与三条硬约束</a></li>
-<li><a href="#shim">做法：静态快照 + 一层 shim</a></li>
-<li><a href="#_13">脱敏闸门（发布前必跑）</a></li>
-<li><a href="#_14">踩到的两个坑</a></li>
-<li><a href="#_15">与线上版的差异</a></li>
-</ul>
-</li>
-<li><a href="#_16">十一、迭代记录与远景</a></li>
+<li><a href="#_11">十、迭代记录与远景</a></li>
 </ul>
 </div>
 </aside>
@@ -130,7 +122,7 @@ footer { max-width:1100px; margin:0 auto; padding:0 24px 48px;
 <p class="sub">个人工作汇总 BOX · 演示站</p>
 
 <blockquote>
-<p>本文档描述<strong>已上线系统</strong>的实际设计（截至 2026-10-09，v0.12）。历史规划稿（v0.2 初步方案）已并入并全面更新，不再区分「设想」与「现状」。版本号与页面里的「最近上新」对齐：本文档 v0.12 ＝ 页面更新日志 v0.12。
+<p>本文档描述<strong>已上线系统</strong>的实际设计（截至 2026-09-28，v0.11）。历史规划稿（v0.2 初步方案）已并入并全面更新，不再区分「设想」与「现状」。版本号与页面里的「最近上新」对齐：本文档 v0.11 ＝ 页面更新日志 v0.11。
 访问地址：<strong>https://ziqi0521.github.io/work-summary-box-demo/</strong> ｜ 配套文档：《个人工作汇总BOX · 使用教程》</p>
 </blockquote>
 <hr />
@@ -143,7 +135,7 @@ footer { max-width:1100px; margin:0 auto; padding:0 24px 48px;
 <li>用户逐卡确认 / 忽略 / 编辑，确认的进入历史归档</li>
 <li>按周 / 月一键生成正式报告（业绩维度 + 文化维度），可直接排版、富文本复制</li>
 </ul>
-<p><strong>演进</strong>：v0.1 单人本地验证 → v0.2 初步方案设计 → v0.3 多用户版上线（OAuth 登录、数据按人隔离）→ v0.4 抓取来源扩展（@我 / 单聊 / 小群）+ 跨来源自动合并 + 报告流式生成与富文本编辑 → v0.5 产出形态扩展（实习总结 / 简历条目、工作画像、报告三种文体）+ 归档一键去重 + 空正文兜底与降级归因 → v0.6 抓取来源再扩（含我写的文档）+ 反馈墙可回复 → v0.7 报告对话改稿（全文重写 + 逐行 diff 预览 + 采用才写回）→ v0.8 稳定性与引导（前端样式改本地内联、排错提示配直达按钮）→ v0.9 待确认卡片一键全确认 → v0.10 站内通知（铃铛）+ 问题反馈状态可改→ v0.11 需求状态可改（待处理 / 处理中 / 已上线）+ 状态变化也提醒 → v0.12 对外演示站（脱敏静态版：零前端改动，静态快照 + fetch / EventSource shim）。</p>
+<p><strong>演进</strong>：v0.1 单人本地验证 → v0.2 初步方案设计 → v0.3 多用户版上线（OAuth 登录、数据按人隔离）→ v0.4 抓取来源扩展（@我 / 单聊 / 小群）+ 跨来源自动合并 + 报告流式生成与富文本编辑 → v0.5 产出形态扩展（实习总结 / 简历条目、工作画像、报告三种文体）+ 归档一键去重 + 空正文兜底与降级归因 → v0.6 抓取来源再扩（含我写的文档）+ 反馈墙可回复 → v0.7 报告对话改稿（全文重写 + 逐行 diff 预览 + 采用才写回）→ v0.8 稳定性与引导（前端样式改本地内联、排错提示配直达按钮）→ v0.9 待确认卡片一键全确认 → v0.10 站内通知（铃铛）+ 问题反馈状态可改→ v0.11 需求状态可改（待处理 / 处理中 / 已上线）+ 状态变化也提醒。</p>
 <hr />
 <h2 id="_2">二、用户与账号体系</h2>
 <ul>
@@ -329,40 +321,7 @@ footer { max-width:1100px; margin:0 auto; padding:0 24px 48px;
 </table>
 
 <hr />
-<h2 id="_11">十、对外演示站（脱敏静态版）</h2>
-<blockquote>
-<p>线上版只能在内部网络访问，没法拿给别人看。这一节记录「把同一个工具做成外网可直接打开的静态站」是怎么做的、以及为什么这么做。</p>
-</blockquote>
-<h3 id="_12">目标与三条硬约束</h3>
-<ul>
-<li><strong>不改前端源码</strong>：演示版不能是从线上 <code>index.html</code> 抄一份改出来的 —— 那样线上每改一次，演示版就烂一次。做法是前端<strong>一行都不改</strong>，只把它身后的后端换掉。</li>
-<li><strong>不带真实数据</strong>：库里是真实姓名、群聊原文、内部项目名，还有凭证字段。发到公网等于泄露，对求职也是负资产。</li>
-<li><strong>要真的能点</strong>：不是截图拼的静态页 —— 确认卡片、点赞、回复、生成报告都得能操作，而且刷新后还在。</li>
-</ul>
-<h3 id="shim">做法：静态快照 + 一层 shim</h3>
-<p>前端约 40 个请求全部汇集到 <code>api()</code> 里的那<strong>一个</strong> <code>fetch(url, opts)</code>，所以在 <code>window.fetch</code> 上装一张路由表就能全覆盖。唯一绕开 fetch 的是 <code>EventSource</code>（抓取进度、报告流式生成、改稿、去重扫描四条流），单独接管 <code>window.EventSource</code>，用 <code>setTimeout</code> 回放预设的事件序列。</p>
-<ul>
-<li><strong>构建期</strong>：把线上那份 <code>index.html</code> 原样搬过来，只在末尾按固定顺序追加「演示数据 → shim → Alpine」。每一处改写都要求<strong>恰好命中一次</strong>，命中数不对就直接失败 —— 上游一改，这里立刻炸掉，而不是悄悄产出一个半坏的页面。</li>
-<li><strong>运行期</strong>：所有写操作落在浏览器 <code>localStorage</code>，所以「确认一张卡 → 刷新还在」；页面上有「重置演示数据」回到初始状态。</li>
-<li><strong>演示数据</strong>全部编造，用中性的软件实习场景，覆盖每个功能面；日期相对「今天」生成，所以演示站不会看起来发霉。</li>
-</ul>
-<h3 id="_13">脱敏闸门（发布前必跑）</h3>
-<p><code>check_public.py</code> 从线上库<strong>只读</strong>拉出真实姓名、群名、项目名、<code>open_id</code>（只在内存里，不落盘、不打印原文），反过来逐行扫仓库里每一个要公开的文本文件；再叠一份内网域名 / 内网 IP / 凭证形状的黑名单。命中即失败并列出位置。</p>
-<p>它带<strong>自检</strong>：拿一条真实词条当探针走一遍匹配路径，确认「能命中、且干净文本不误报」—— 否则黑名单读空了，闸门照样打印「全部通过」，比没有闸门更危险。</p>
-<h3 id="_14">踩到的两个坑</h3>
-<ul>
-<li><strong>Alpine 的初始化时机</strong>：内联在 <code>&lt;head&gt;</code> 里会白屏 —— 它的 CDN 构建末尾是 <code>queueMicrotask(() =&gt; Alpine.start())</code>，而 <code>start()</code> 在 <code>document.body</code> 还不存在时会直接放弃初始化。原本靠 <code>&lt;script defer&gt;</code> 撑到 DOM 解析完，<strong>内联脚本不吃 defer</strong>，挪到 <code>&lt;/body&gt;</code> 前才正常。</li>
-<li><strong>shim 必须装得比 Alpine 早</strong>：Alpine 一 <code>start()</code> 就会跑 <code>x-init</code> 里的初始化，那一刻 <code>fetch('/api/me')</code> 必须已经被接管，否则整站停在登录门。</li>
-</ul>
-<h3 id="_15">与线上版的差异</h3>
-<ul>
-<li>数据：编造的演示数据，不是真实数据</li>
-<li>后端：<code>window.fetch</code> / <code>window.EventSource</code> 上的 shim，不发任何真实网络请求</li>
-<li>登录：恒为已登录状态，没有真的 OAuth 流程</li>
-<li>链接：指向内部系统的入口（使用教程、绩效系统）已改为站内页面或占位地址</li>
-</ul>
-<hr />
-<h2 id="_16">十一、迭代记录与远景</h2>
+<h2 id="_11">十、迭代记录与远景</h2>
 <table>
 <thead><tr><th>版本</th><th>时间</th><th>关键变化</th></tr></thead>
 <tr><td>v0.1</td><td>2026-08 前</td><td>单人本地验证：抓取 + 凝练 + 确认</td></tr>
@@ -379,7 +338,6 @@ footer { max-width:1100px; margin:0 auto; padding:0 24px 48px;
 <tr><td>v0.9</td><td>2026-09-24</td><td>待确认卡片「✅ 全部确认」：一次确认当前列出的那一批，逐张复用单张确认的接口、顺序发不并发。（＝页面更新日志 v0.9）</td></tr>
 <tr><td>v0.10</td><td>2026-09-24</td><td>🔔 站内通知：有人回复我提的 / 我参与过的话题，顶部铃铛亮红点、点一下直达；问题反馈状态机主可改（待处理 / 处理中 / 已修复）。（＝页面更新日志 v0.10）</td></tr>
 <tr><td>v0.11</td><td>2026-09-24</td><td>新功能需求也能标状态（待处理 / 处理中 / 已上线），档位按 kind 分；状态变化同样计入站内通知。（＝页面更新日志 v0.11）</td></tr>
-<tr><td>v0.12</td><td>2026-10-09</td><td>对外演示站：把同一个前端做成脱敏数据的静态版，外网可直接打开（零前端改动 —— 静态快照 + fetch / EventSource shim）；发布前跑脱敏闸门。（＝页面更新日志 v0.12）</td></tr>
 </table>
 
 <p><strong>远景（未做）</strong>：定时自动抓取；报告一键导出飞书文档；移动端适配；报告多语言/汇报模板。</p>  </article>

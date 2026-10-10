@@ -86,17 +86,7 @@ def main():
         "去掉内网服务名注释",
     )
 
-    # ---- 4. 确认 v0.12 已在源 index.html 的上新日志里 ----------------------
-    # 不在构建期注入这条：线上页面也要加同一个 v0.12，两处各写一份迟早会分叉。
-    # 所以源 index.html 是唯一出处，这里只断言它确实在、且只有一条。
-    html = sub_once(
-        html,
-        r"\{ v: 'v0\.12',",
-        lambda m: m.group(0),
-        "确认 v0.12 已在源 index.html 的 CHANGELOG 里（只有一条）",
-    )
-
-    # ---- 5. 末尾注入演示数据 + shim + Alpine ------------------------------
+    # ---- 4. 末尾注入演示数据 + shim + Alpine ------------------------------
     # 顺序不能动：横幅 → 数据 → shim → Alpine。
     # Alpine 放最后是因为它 start() 时要 document.body 已经存在（见上面第 1 条）；
     # shim 放 Alpine 前面是因为 Alpine 一 start 就会跑 x-init 里的 init()，
